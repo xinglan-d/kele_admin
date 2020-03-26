@@ -15,5 +15,6 @@ import lombok.Setter;
 public class BusinessBaseVO {
 
     private String primaryKey;
-    
+
+
 }

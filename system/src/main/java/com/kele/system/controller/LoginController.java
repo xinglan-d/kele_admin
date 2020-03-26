@@ -5,10 +5,9 @@ import com.kele.base.service.ResultService;
 import com.kele.system.service.LoginService;
 import com.kele.system.vo.LoginVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @description:登录控制层
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @version: 1.0
  */
 @RestController
+@CrossOrigin
 public class LoginController {
 
 
@@ -24,11 +24,11 @@ public class LoginController {
     private LoginService loginService;
 
     @RequestMapping(value = "/toLogin", method = RequestMethod.POST)
-    private Result<?> toLogin(@RequestBody LoginVO loginVO) {
+    private Result<?> toLogin(@RequestBody(required = false) LoginVO loginVO) {
         if (loginService.toLogin(loginVO)) {
             return ResultService.success("123");
         } else {
-            return ResultService.error("123");
+            return ResultService.error("用户名密码错误");
         }
     }
 }
