@@ -8,30 +8,27 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 
 /**
- * @description:用户表
- * @author: dzy
- * @createDate: 2020/1/20 14:04
+ * @description:
+ * @author: duzongyue
+ * @createDate: 2020/03/27 18:54
  * @version: 1.0
  */
 @Entity
-@Table(name = "sys_user")
-@Setter
+@Table(name = "sys_service")
 @Getter
-public class UserDO extends BusinessBaseDO {
+@Setter
+public class SysServiceDO extends BusinessBaseDO {
 
     @Id
     @GeneratedValue(generator = "system-uuid")
     @GenericGenerator(name = "system-uuid", strategy = "uuid")
     @Column(length = 32)
-    private String userId;
-
-    @Column(length = 24)
-    private String account;
-
-    @Column(length = 56)
-    private String password;
-
-    @Column(length = 11)
-    private String phone;
+    private String serviceId;
+    @Column(length = 64)
+    private String name;
+    @Column(length = 128)
+    private String servicePath;
+    @Column(length = 12)
+    private String icon;
 
 }

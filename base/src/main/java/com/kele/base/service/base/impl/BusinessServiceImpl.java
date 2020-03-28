@@ -5,15 +5,14 @@ import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.dao.jpa.impl.BusinessBaseDaoImpl;
 import com.kele.base.model.annotation.base.BusinessColumn;
-import com.kele.base.service.base.BusinessService;
 import com.kele.base.model.util.SpringUtil;
+import com.kele.base.service.base.BusinessService;
 import com.kele.base.vo.BusinessBaseVO;
 import com.kele.base.vo.page.PageData;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -25,6 +24,13 @@ import java.util.List;
 @Service
 public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBaseDO> implements BusinessService<V, D> {
 
+    public BusinessServiceImpl() {
+    }
+
+    public BusinessServiceImpl(Class<V> voClass, Class<D> doClass) {
+        this.voClass = voClass;
+        this.doClass = doClass;
+    }
 
     private Class<V> voClass;
     private Class<D> doClass;

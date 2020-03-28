@@ -1,6 +1,5 @@
 package com.kele.system.service.impl;
 
-import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.system.dao.SystemDao;
 import com.kele.system.dao.dto.UserDO;
 import com.kele.system.service.LoginService;
@@ -25,7 +24,6 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public boolean toLogin(LoginVO loginVO) {
-
         //封装do对象
         UserDO userDO = new UserDO();
         userDO.setAccount(loginVO.getAccount());

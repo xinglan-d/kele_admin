@@ -1,9 +1,10 @@
 package com.kele.system.controller;
 
 import com.kele.base.controller.Result;
-import com.kele.base.model.bo.BusinessSysMenuBO;
-import com.kele.base.model.common.Commons;
 import com.kele.base.service.ResultService;
+import com.kele.system.service.SysMenuService;
+import com.kele.system.vo.menu.SysServiceMenuVO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,10 +19,14 @@ import java.util.List;
 @RestController
 public class SysMenuController {
 
+    @Autowired
+    private SysMenuService sysMenuService;
+
+
     @RequestMapping("/getSysMenu")
-    public Result<?> getSysMenu(){
-        List<BusinessSysMenuBO> sysMenu = Commons.getInstance().getSysMenu();
-        return ResultService.success(sysMenu);
+    public Result<?> getSysMenu() {
+        List<SysServiceMenuVO> serviceMenus = sysMenuService.getServiceMenus();
+        return ResultService.success(serviceMenus);
     }
 
 }

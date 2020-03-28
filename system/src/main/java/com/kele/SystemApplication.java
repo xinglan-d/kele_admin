@@ -1,8 +1,9 @@
 package com.kele;
 
-import com.kele.base.model.common.menu.Menu;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  *
@@ -14,9 +15,10 @@ public class SystemApplication {
 
 
 
-    public static void main(String[] args) {
-//        Menu.getInstance().getSysMenu();
+    public static void main(String[] args) throws InvocationTargetException, IllegalAccessException {
         SpringApplication.run(SystemApplication.class, args);
+
+
     }
 
 }
