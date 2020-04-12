@@ -31,4 +31,5 @@ public @interface BusinessColumn {
 
     //是否多选  默认单选
     boolean multiple() default false;
+
 }

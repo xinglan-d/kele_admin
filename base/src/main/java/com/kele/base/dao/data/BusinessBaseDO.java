@@ -6,5 +6,7 @@ package com.kele.base.dao.data;
  * @createDate: 2020/1/20 14:53
  * @version: 1.0
  */
-public class BusinessBaseDO {
+public abstract class BusinessBaseDO {
+
+    public abstract String getPrimaryKey();
 }

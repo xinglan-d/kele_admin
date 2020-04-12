@@ -11,32 +11,38 @@ import java.util.List;
 /**
  * @description:
  * @author: duzongyue
- * @createDate: 2020/03/27 18:54
+ * @createDate: 2020/03/30 07:38
  * @version: 1.0
  */
 @Entity
-@Table(name = "sys_service")
+@Table(name = "sys_menu")
 @Getter
 @Setter
-public class SysServiceDO extends BusinessBaseDO {
-
+public class SysMenuDO extends BusinessBaseDO {
     @Id
     @GeneratedValue(generator = "system-uuid")
     @GenericGenerator(name = "system-uuid", strategy = "uuid")
     @Column(length = 32)
-    private String serviceId;
-    @Column(length = 64)
+    private String menuId;
+    @Column(length = 32)
+    private String parentId;
+    @Column(length = 255)
     private String name;
-    @Column(length = 128)
-    private String servicePath;
+    @Column(length = 1)
+    private String type;
     @Column(length = 12)
     private String icon;
+    @Column(length = 6)
+    private String color;
+    @Column(length = 255)
+    private String url;
+
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "parentId")
     private List<SysMenuDO> menus;
 
     @Override
     public String getPrimaryKey() {
-        return serviceId;
+        return menuId;
     }
 }

@@ -34,4 +34,8 @@ public class UserDO extends BusinessBaseDO {
     @Column(length = 11)
     private String phone;
 
+    @Override
+    public String getPrimaryKey() {
+        return userId;
+    }
 }

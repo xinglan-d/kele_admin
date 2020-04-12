@@ -5,9 +5,10 @@ import com.kele.base.service.ResultService;
 import com.kele.system.service.LoginService;
 import com.kele.system.vo.LoginVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @description:登录控制层
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
  * @version: 1.0
  */
 @RestController
-@CrossOrigin
 public class LoginController {
 
 

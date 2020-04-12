@@ -41,6 +41,16 @@ public class BeanUtil {
         }
     }
 
+    public void setValues(String fieldName, Object... args) throws InvocationTargetException, IllegalAccessException {
+        String setFieldName = "set" + capitalize(fieldName);
+        Method method = getMethods(aClass, setFieldName);
+        if (method != null) {
+            validateSetter(method);
+            method.invoke(data, args);
+        }
+    }
+
+
     private void validateSetter(Method method) {
         if (!Modifier.isPublic(method.getModifiers())) {
             throw new IllegalArgumentException("set方法 \"" + method + "\" 非 public");
@@ -91,9 +101,19 @@ public class BeanUtil {
         try {
             return targetClass.getMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException e) {
-            log.error(e.getMessage(), e);
+
+            log.error(e.getMessage(), "未找到" + methodName + "方法");
             return null;
         }
+    }//获取方法 如果获取不到代表没有这个方法
+    private Method getMethods(Class targetClass, String methodName) {
+        Method[] methods = targetClass.getMethods();
+        for (Method method : methods) {
+            if(method.getName().equals(methodName)){
+                return method;
+            }
+        }
+        return null;
     }
 
     //将第一个字符转换位大写

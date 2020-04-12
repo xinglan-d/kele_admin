@@ -5,7 +5,7 @@ import com.kele.base.service.ResultService;
 import com.kele.system.service.SysMenuService;
 import com.kele.system.vo.menu.SysServiceMenuVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class SysMenuController {
     private SysMenuService sysMenuService;
 
 
-    @RequestMapping("/getSysMenu")
+    @GetMapping("/getSysMenu")
     public Result<?> getSysMenu() {
         List<SysServiceMenuVO> serviceMenus = sysMenuService.getServiceMenus();
         return ResultService.success(serviceMenus);
