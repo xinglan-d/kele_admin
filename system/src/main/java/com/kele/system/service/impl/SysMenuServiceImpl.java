@@ -1,5 +1,6 @@
 package com.kele.system.service.impl;
 
+import com.kele.base.model.annotation.base.BusinessColumn;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.system.dao.ServiceMenuDao;
 import com.kele.system.dao.dto.SysServiceDO;
@@ -31,8 +32,9 @@ public class SysMenuServiceImpl implements SysMenuService {
         List<SysServiceDO> serviceMenus = serviceMenuDao.findAll();
         BusinessUtils businessUtils = new BusinessUtils(SysServiceMenuVO.class);
         try {
-            return businessUtils.dosToVos(serviceMenus);
+            return businessUtils.dosToVos(serviceMenus, BusinessColumn.class);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            System.out.println(e.getMessage());
             log.error(e.getMessage(), e);
         }
         return null;

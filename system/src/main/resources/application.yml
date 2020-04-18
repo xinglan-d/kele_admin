@@ -20,6 +20,7 @@ spring:
   #        one-indexed-parameters: true
   jackson:
     time-zone: GMT+8
+    default-property-inclusion: non_null
 server:
   port: 8081
 

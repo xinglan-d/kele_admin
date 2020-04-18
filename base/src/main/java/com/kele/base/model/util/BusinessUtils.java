@@ -21,12 +21,19 @@ public class BusinessUtils<V extends BusinessBaseVO, D extends BusinessBaseDO> {
         this.voClass = voClass;
     }
 
-
     public List<V> dosToVos(List<D> doDataList) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        return dosToVos(doDataList, (Class[]) null);
+    }
+
+    public List<V> dosToVos(List<D> doDataList, Class annotationClass) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        return dosToVos(doDataList, new Class[]{annotationClass});
+    }
+
+    public List<V> dosToVos(List<D> doDataList, Class[] classes) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         List<V> vos = new ArrayList<>();
         for (D doData : doDataList) {
             V vo = voClass.getDeclaredConstructor().newInstance();
-            vo.setDo(doData);
+            vo.setDo(doData, classes);
             vos.add(vo);
         }
         return vos;

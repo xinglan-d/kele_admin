@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -106,10 +107,11 @@ public class BeanUtil {
             return null;
         }
     }//获取方法 如果获取不到代表没有这个方法
+
     private Method getMethods(Class targetClass, String methodName) {
         Method[] methods = targetClass.getMethods();
         for (Method method : methods) {
-            if(method.getName().equals(methodName)){
+            if (method.getName().equals(methodName)) {
                 return method;
             }
         }
@@ -120,5 +122,23 @@ public class BeanUtil {
     private String capitalize(String property) {
         return Character.toUpperCase(property.charAt(0)) +
                 property.substring(1);
+    }
+
+    /**
+     * 反射出对应字段的类型
+     *
+     * @param name
+     * @return java.lang.Class
+     * @author duzongyue
+     * @date 2020-04-15 22:39:12
+     */
+    public Class getFiledClass(String name) {
+        try {
+            Field f = aClass.getDeclaredField(name);
+            return f.getType();
+        } catch (NoSuchFieldException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 }

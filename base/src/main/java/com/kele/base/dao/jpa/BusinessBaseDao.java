@@ -1,10 +1,6 @@
 package com.kele.base.dao.jpa;
 
 import com.kele.base.dao.data.BusinessBaseDO;
-import com.kele.base.vo.BusinessBaseVO;
-import com.sun.xml.bind.v2.model.core.ID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,6 +14,8 @@ import java.util.List;
 @Repository
 public interface BusinessBaseDao<D extends BusinessBaseDO, ID> {
 
+    Integer getTotal(PageParameter pageParameter);
+
     List<D> findAll(PageParameter pageParameter);
 
     D findById(ID id);
@@ -25,4 +23,5 @@ public interface BusinessBaseDao<D extends BusinessBaseDO, ID> {
     void setIdClass(Class<ID> idType);
 
     void setDoClass(Class<D> doClass);
+
 }

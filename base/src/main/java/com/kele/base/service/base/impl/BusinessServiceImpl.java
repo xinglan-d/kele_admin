@@ -3,9 +3,9 @@ package com.kele.base.service.base.impl;
 import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.base.dao.jpa.PageParameter;
-import com.kele.base.dao.jpa.impl.BusinessBaseDaoImpl;
 import com.kele.base.model.annotation.base.BusinessColumn;
 import com.kele.base.model.annotation.page.TableColumn;
+import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.model.util.SpringUtil;
 import com.kele.base.service.base.BusinessService;
 import com.kele.base.vo.BusinessBaseVO;
@@ -31,13 +31,6 @@ import java.util.List;
 @Log4j2
 public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBaseDO> implements BusinessService<V, D> {
 
-    public BusinessServiceImpl() {
-    }
-
-    public BusinessServiceImpl(Class<V> voClass, Class<D> doClass) {
-        this.voClass = voClass;
-        this.doClass = doClass;
-    }
 
     private Class<V> voClass;
     private Class<D> doClass;
@@ -47,37 +40,35 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     List<Field> voFields;
 
     @Override
-    public void getAll(int page, int size) {
-        PageParameter pageParameter = new PageParameter(page, size);
-        List<D> data = getBaseDao().findAll(pageParameter);
-        PageData<V> pageData = doToVO(data);
-    }
-
-
-    private PageData<V> doToVO(List<D> data) {
-        List<V> vList = new ArrayList<>();
-        for (D d : data) {
-            doToVO(d);
+    public PageData<V> getAll(V vo) {
+        //获取查询参数
+        PageParameter pageParameter;
+        if (vo != null) {
+            pageParameter = vo.getPageParameter();
+        } else {
+            pageParameter = new PageParameter(1, 10);
+        }
+        //封装查询参数
+        Integer total = getBaseDao().getTotal(pageParameter);//获取总数量
+        List data = getBaseDao().findAll(pageParameter);//获取数据
+        BusinessUtils<V, D> businessUtils = new BusinessUtils(voClass);
+        PageData<V> pageData = new PageData<>();
+        try {
+            List<V> row = businessUtils.dosToVos(data, TableColumn.class);//获取列表页面数据
+            pageData.setRows(row);
+            pageData.setTotal(total);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            log.error(e.getMessage(), e);
         }
 
-        return null;
-    }
-
-    private PageData<V> doToVO(D data) {
-        List<V> vList = new ArrayList<>();
-        for (Field voField : voFields) {
-            BusinessColumn businessColumn = voField.getAnnotation(BusinessColumn.class);
-            System.out.println(businessColumn);
-        }
-
-        return null;
+        return pageData;
     }
 
     @Override
     public void setVOClass(Class<V> voClass) {
         this.voClass = voClass;
         try {
-            voFields = voClass.getDeclaredConstructor().newInstance().getFields();
+            voFields = voClass.getDeclaredConstructor().newInstance().getVOFields();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException
                 | NoSuchMethodException e) {
             log.error(e.getMessage(), e);
@@ -115,14 +106,12 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
         return pageAttrVO;
     }
 
-
     public BusinessBaseDao getBaseDao() {
         if (baseDao == null) {
-            baseDao = SpringUtil.getBean(BusinessBaseDaoImpl.class);
+            baseDao = SpringUtil.getBean(BusinessBaseDao.class);
             baseDao.setIdClass(String.class);
             baseDao.setDoClass(doClass);
         }
         return baseDao;
     }
-
 }

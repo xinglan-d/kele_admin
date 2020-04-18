@@ -1,15 +1,20 @@
 package com.kele.base.vo;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.kele.base.dao.data.BusinessBaseDO;
+import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.model.annotation.base.BusinessColumn;
 import com.kele.base.model.annotation.page.TableColumn;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.util.BeanUtil;
+import com.kele.base.vo.page.SearchVO;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -26,21 +31,55 @@ import java.util.List;
  */
 @Getter
 @Setter
-public abstract class BusinessBaseVO<D extends BusinessBaseDO> {
+@Log4j2
+public class BusinessBaseVO<D extends BusinessBaseDO> {
 
+    @BusinessColumn
     @TableColumn(isCheckbox = true)
     protected String primaryKey;
 
+    //页码
+    private Integer pageNumber;
+
+    //每页查询数量
+    private Integer pageSize;
+
+    //搜索栏
+    private List<SearchVO> search = new ArrayList<>();
+
     public void setDo(D doData) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+        setDo(doData, (Class[]) null);
+    }
+
+    public void setDo(D doData, Class annotationClass) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+        setDo(doData, new Class[]{annotationClass});
+    }
+
+    public void setDo(D doData, Class[] annotations) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
         //获取vo的数据集
         BeanUtil beanUtil = new BeanUtil(this);
         //获取所有变量
-        List<Field> fields = getFields();
+        List<Field> fields = getVOFields();
         //获取do的数据集
         BeanUtil doBeanUtil = new BeanUtil(doData);
         //遍历vo变量
         for (Field field : fields) {
-            //获取对应的变量名注解 有注解的用注解优先无注解的使用变量名
+            //判断是否扫描带有特定注解的类
+            if (annotations != null) {
+                boolean isContinue = true;//是否跳过当前变量
+                for (Class annotation : annotations) {
+                    Annotation annotationFather = field.getAnnotation(annotation);
+                    if (annotationFather != null) {
+                        isContinue = false;
+                        break;
+                    }
+                }
+                if (isContinue) {
+                    continue;
+                }
+            }
+
+            //获取对应的变量名注解 有注解的用注解优先    无注解的使用变量名
             String[] fieldName = getFieldName(field);
             //获取对应的变量值
             Object value = getValue(doBeanUtil, fieldName);
@@ -55,12 +94,11 @@ public abstract class BusinessBaseVO<D extends BusinessBaseDO> {
             if (value != null) {
                 //TODO 需要在这里添加判断是否获取的是array数据
                 if (field.getType().isAssignableFrom(List.class)) {
-                    System.out.println(field.getType());
                     List list = (List) value;
                     Class<?>[] classes = getParameterizedType(field);
                     for (Class<?> aClass : classes) {
                         BusinessUtils businessUtils = new BusinessUtils(aClass);
-                        value = businessUtils.dosToVos(list);
+                        value = businessUtils.dosToVos(list,annotations);
                     }
                     beanUtil.setValues(field.getName(), value);
                 } else {
@@ -79,16 +117,18 @@ public abstract class BusinessBaseVO<D extends BusinessBaseDO> {
      * @author duzongyue
      * @date 2020-04-05 10:52:22
      */
-    public List<Field> getFields() {
-        return getFields(this.getClass());
+    @JsonIgnore
+    public List<Field> getVOFields() {
+        return getVOFields(this.getClass());
     }
 
-    public List<Field> getFields(Class clazz) {
+    @JsonIgnore
+    public List<Field> getVOFields(Class clazz) {
         List<Field> list = new ArrayList<>();
         if (clazz == null) {
             return list;
         }
-        list.addAll(getFields(clazz.getSuperclass()));
+        list.addAll(getVOFields(clazz.getSuperclass()));
         list.addAll(new ArrayList<>(Arrays.asList(clazz.getDeclaredFields())));
         return list;
     }
@@ -157,4 +197,51 @@ public abstract class BusinessBaseVO<D extends BusinessBaseDO> {
         }
         return new Class[0];
     }
+
+    /**
+     * 获取搜索参数
+     *
+     * @param
+     * @return com.kele.base.dao.jpa.PageParameter
+     * @author duzongyue
+     * @date 2020-04-15 07:41:43
+     */
+    @JsonIgnore
+    public PageParameter getPageParameter() {
+        PageParameter pageParameter = new PageParameter(pageNumber,pageSize);
+        pageParameter.setSearch(getSearchVOS(this.search));
+        return pageParameter;
+    }
+
+    /**
+     * 封装搜索的vo参数
+     *
+     * @param searchVOList
+     * @return java.util.List<com.kele.base.vo.page.SearchVO>
+     * @author duzongyue
+     * @date 2020-04-15 07:42:05
+     */
+    @JsonIgnore
+    private List<SearchVO> getSearchVOS(List<SearchVO> searchVOList) {
+        if (searchVOList == null) {
+            searchVOList = new ArrayList<>();
+        }
+        //获取vo的数据集
+        BeanUtil beanUtil = new BeanUtil(this);
+        for (SearchVO search : searchVOList) {
+            Object value;
+            search.setAClass(beanUtil.getFiledClass(search.getName()));
+            try {
+                value = beanUtil.getValue(search.getName());
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                value = null;
+                log.error(e.getMessage(), e);
+            }
+            if (search.getValue() == null && value != null) {
+                search.setValue(value);
+            }
+        }
+        return searchVOList;
+    }
+
 }

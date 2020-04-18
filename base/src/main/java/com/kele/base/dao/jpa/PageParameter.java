@@ -1,6 +1,10 @@
 package com.kele.base.dao.jpa;
 
+import com.kele.base.vo.page.SearchVO;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @description:页面查询参数
@@ -11,9 +15,17 @@ import lombok.Data;
 @Data
 public class PageParameter {
 
+    private int pageNumber;
 
-    public PageParameter(int pageNumber, int pageSize) {
-        this(pageNumber, pageSize, true);
+    private int pageSize;
+
+    List<SearchVO> search;
+
+    public PageParameter() {
+    }
+
+    public PageParameter(Integer pageNumber, Integer pageSize) {
+        this( pageNumber,  pageSize,true);
     }
 
     /**
@@ -24,16 +36,36 @@ public class PageParameter {
      * @author duzongyue
      * @date 2020-03-22 00:47:59
      */
-    public PageParameter(int pageNumber, int pageSize, boolean isZero) {
-        if (isZero) {
-            pageNumber = pageNumber != 0 ? pageNumber - 1 : pageNumber;
+    public PageParameter(Integer pageNumber, Integer pageSize, boolean isZero) {
+        if (isZero && pageNumber != null & pageNumber >= 1) {
+            pageNumber = pageNumber - 1;
         }
+        setPageNumber(pageNumber);
+        setPageSize(pageSize);
+        setSearch(null);
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
     }
 
-    private int pageNumber;
+    public void setPageNumber(Integer pageNumber) {
+        if (pageNumber == null) {
+            pageNumber = 0;
+        }
+        this.pageNumber = pageNumber;
+    }
 
-    private int pageSize;
+    public void setPageSize(Integer pageSize) {
+        if (pageSize == null) {
+            //TODO 回头修改为在数据库中配置
+            pageSize = 10;
+        }
+        this.pageSize = pageSize;
+    }
 
+    public void setSearch(List<SearchVO> search) {
+        if (search == null) {
+            search = new ArrayList<>();
+        }
+        this.search = search;
+    }
 }
