@@ -14,6 +14,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.persistence.Id;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -78,18 +79,10 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
                     continue;
                 }
             }
-
             //获取对应的变量名注解 有注解的用注解优先    无注解的使用变量名
             String[] fieldName = getFieldName(field);
             //获取对应的变量值
             Object value = getValue(doBeanUtil, fieldName);
-
-            /*if (field.getGenericType() instanceof BusinessBaseVO) {
-                if (field.getType().isAssignableFrom(List.class)) {
-                    BusinessUtils businessUtils = new BusinessUtils(field.getType());
-                    value = businessUtils.dosToVos((List) value);
-                }
-            }*/
             //将获取到的值放入vo对象中
             if (value != null) {
                 //TODO 需要在这里添加判断是否获取的是array数据
@@ -98,7 +91,7 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
                     Class<?>[] classes = getParameterizedType(field);
                     for (Class<?> aClass : classes) {
                         BusinessUtils businessUtils = new BusinessUtils(aClass);
-                        value = businessUtils.dosToVos(list,annotations);
+                        value = businessUtils.dosToVos(list, annotations);
                     }
                     beanUtil.setValues(field.getName(), value);
                 } else {
@@ -142,7 +135,7 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
      * @author duzongyue
      * @date 2020-04-05 10:54:51
      */
-    private Object getValue(BeanUtil doBeanUtil, String[] fieldName) throws InvocationTargetException, IllegalAccessException {
+    private Object getValue(BeanUtil doBeanUtil, String... fieldName) throws InvocationTargetException, IllegalAccessException {
         return getValue(doBeanUtil, fieldName, 0);
     }
 
@@ -208,7 +201,7 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
      */
     @JsonIgnore
     public PageParameter getPageParameter() {
-        PageParameter pageParameter = new PageParameter(pageNumber,pageSize);
+        PageParameter pageParameter = new PageParameter(pageNumber, pageSize);
         pageParameter.setSearch(getSearchVOS(this.search));
         return pageParameter;
     }
@@ -244,4 +237,57 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
         return searchVOList;
     }
 
+    @JsonIgnore
+    public D getDO() throws IllegalAccessException, InstantiationException, InvocationTargetException {
+        ParameterizedType parameterizedType = (ParameterizedType) this.getClass().getGenericSuperclass();
+        Class dClass = (Class) parameterizedType.getActualTypeArguments()[0];
+        if (dClass != null) {
+            //获取vo的数据集
+            BeanUtil beanUtil = new BeanUtil(this);
+            //创建实例对象
+            D data = (D) dClass.newInstance();
+            BeanUtil doBeanUtil = new BeanUtil(data);
+            List<Field> voFields = getVOFields();
+            for (Field field : voFields) {
+                BusinessColumn businessColumn = field.getAnnotation(BusinessColumn.class);
+                if (businessColumn != null) {
+                    //通过变量名获取数据
+                    String[] fieldName = getFieldName(field);
+                    Object value = getValue(beanUtil, fieldName);
+                    //如果是主键的话遍历do对象放入对应的id参数
+                    if (value != null) {
+                        //TODO 这个在新增的情况下永远不会走
+                        if ("primaryKey".equals(field.getName())) {
+                            String doIdName = getDoIdName(data, value);
+                            if (doIdName != null) {
+                                doBeanUtil.setValue(doIdName, value);
+                            }
+                        }
+                        setValue(doBeanUtil, fieldName, value);
+                    }
+                }
+            }
+            return data;
+        }
+        return null;
+    }
+
+    //保存数据
+    private void setValue(BeanUtil doBeanUtil, String[] fieldName, Object value) throws InvocationTargetException, IllegalAccessException {
+        doBeanUtil.setValue(fieldName[0], value);
+    }
+
+
+    //获取do对象的id的变量名
+    @JsonIgnore
+    private String getDoIdName(D data, Object value) {
+        Field[] fields = data.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            Id annotation = field.getAnnotation(Id.class);
+            if (annotation != null) {
+                return field.getName();
+            }
+        }
+        return null;
+    }
 }

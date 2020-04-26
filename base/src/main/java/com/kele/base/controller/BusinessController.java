@@ -4,14 +4,18 @@ import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.service.ResultService;
 import com.kele.base.service.base.BusinessService;
 import com.kele.base.vo.BusinessBaseVO;
+import com.kele.base.vo.page.EditAttrVO;
 import com.kele.base.vo.page.PageAttrVO;
 import com.kele.base.vo.page.PageData;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 
 /**
@@ -21,6 +25,7 @@ import java.lang.reflect.ParameterizedType;
  * @version: 1.0
  */
 
+@Log4j2
 public class BusinessController<V extends BusinessBaseVO, D extends BusinessBaseDO> implements InitializingBean {
 
     @Autowired
@@ -35,8 +40,25 @@ public class BusinessController<V extends BusinessBaseVO, D extends BusinessBase
 
     @RequestMapping(value = "/getAll", method = RequestMethod.POST)
     public Result<PageData<V>> getAll(@RequestBody(required = false) V vo) {
+        log.info("测试");
         PageData<V> pageData = businessService.getAll(vo);
         return ResultService.success(pageData);
+    }
+
+    @RequestMapping("/getEditAttr")
+    public Result<EditAttrVO> getPageAttr(Object primaryKey) {
+        EditAttrVO editAttr = businessService.getEditAttr();
+        return ResultService.success(editAttr);
+    }
+
+    @RequestMapping("/edit")
+    public Result<EditAttrVO> edit(@RequestBody V vo) throws IllegalAccessException, InstantiationException, InvocationTargetException {
+        if (StringUtils.isBlank(vo.getPrimaryKey())) {
+            businessService.addVO(vo);
+        } else {
+            businessService.editVO(vo);
+        }
+        return ResultService.success(null);
     }
 
     private Class getTClassName(int order) {

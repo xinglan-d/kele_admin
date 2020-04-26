@@ -4,22 +4,20 @@ import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.model.annotation.base.BusinessColumn;
+import com.kele.base.model.annotation.edit.FormColumn;
 import com.kele.base.model.annotation.page.TableColumn;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.model.util.SpringUtil;
 import com.kele.base.service.base.BusinessService;
 import com.kele.base.vo.BusinessBaseVO;
-import com.kele.base.vo.page.PageAttrVO;
-import com.kele.base.vo.page.PageData;
-import com.kele.base.vo.page.TableColumnParam;
+import com.kele.base.vo.page.*;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @description:
@@ -104,6 +102,70 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
         PageAttrVO pageAttrVO = new PageAttrVO();
         pageAttrVO.setColumns(columns);
         return pageAttrVO;
+    }
+
+    @Override
+    public EditAttrVO getEditAttr() {
+        List<FormColumnParam> columns = new ArrayList<>();
+        for (Field voField : voFields) {
+            //获取需要form表格渲染的菜单
+            FormColumn formColumn = voField.getAnnotation(FormColumn.class);
+            //form表单不许不存在businessColumn注解
+            BusinessColumn businessColumn = voField.getAnnotation(BusinessColumn.class);
+            if (formColumn != null && businessColumn != null) {
+                FormColumnParam formColumnParam = new FormColumnParam();
+                formColumnParam.setField(voField.getName());
+                formColumnParam.setTitle(businessColumn.value());
+                formColumnParam.setRules(getRules(voField, formColumn));
+                columns.add(formColumnParam);
+            }
+        }
+        EditAttrVO editAttrVO = new EditAttrVO();
+        editAttrVO.setColumns(columns);
+        return editAttrVO;
+    }
+
+    @Override
+    public void addVO(V vo) throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        D aDo = (D) vo.getDO();
+        getBaseDao().save(aDo);
+    }
+
+    @Override
+    public void editVO(V vo) {
+
+    }
+
+    /**
+     * 获取校验规则
+     *
+     * @param voField
+     * @param formColumn
+     * @return java.lang.String
+     * @author duzongyue
+     * @date 2020-04-22 10:02:10
+     */
+    private RulesVO getRules(Field voField, FormColumn formColumn) {
+        RulesVO rulesVO = new RulesVO();
+        //获取输入类型
+        if (StringUtils.isNotBlank(formColumn.type())) {
+            rulesVO.setType(formColumn.type());
+        } else if (String.class.isAssignableFrom(voField.getType())) {
+            rulesVO.setType("string");
+        } else if (Integer.class.isAssignableFrom(voField.getType())) {
+            rulesVO.setType("number");
+        }
+        //是否必须输入
+        rulesVO.setRequired(formColumn.required());
+        //最大输入数量 -1不限制
+        if (formColumn.max() != -1) {
+            rulesVO.setMax(formColumn.max());
+        }
+        //最少输入数量 -1不限制
+        if (formColumn.min() != -1) {
+            rulesVO.setMin(formColumn.min());
+        }
+        return rulesVO;
     }
 
     public BusinessBaseDao getBaseDao() {

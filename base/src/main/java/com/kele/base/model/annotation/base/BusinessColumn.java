@@ -26,6 +26,9 @@ public @interface BusinessColumn {
     //字段类型
     ColumnType type() default ColumnType.INPUT;
 
+    //正则
+    String regular() default "";
+
     //是否是下拉选
     String selectCode() default "";
 

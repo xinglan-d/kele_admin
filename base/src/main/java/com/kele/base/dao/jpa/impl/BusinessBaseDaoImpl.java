@@ -8,6 +8,7 @@ import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.vo.page.SearchVO;
 import lombok.Getter;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -23,6 +24,7 @@ import java.util.List;
  */
 @Repository
 @Getter
+@Transactional
 public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements BusinessBaseDao<D, ID> {
 
     @PersistenceContext()
@@ -50,6 +52,11 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
         query.setFirstResult(pageParameter.getPageNumber());
         query.setMaxResults(pageParameter.getPageSize());
         return query.getResultList();
+    }
+
+    @Override
+    public void save(D doData) {
+        getEntityManager().persist(doData);
     }
 
 

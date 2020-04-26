@@ -18,6 +18,8 @@ public interface BusinessBaseDao<D extends BusinessBaseDO, ID> {
 
     List<D> findAll(PageParameter pageParameter);
 
+    void save(D doData);
+
     D findById(ID id);
 
     void setIdClass(Class<ID> idType);
