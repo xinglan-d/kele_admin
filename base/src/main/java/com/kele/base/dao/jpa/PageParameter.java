@@ -25,7 +25,7 @@ public class PageParameter {
     }
 
     public PageParameter(Integer pageNumber, Integer pageSize) {
-        this( pageNumber,  pageSize,true);
+        this(pageNumber, pageSize, true);
     }
 
     /**
@@ -67,5 +67,10 @@ public class PageParameter {
             search = new ArrayList<>();
         }
         this.search = search;
+    }
+
+    public int getOffset() {
+
+        return pageNumber * pageSize;
     }
 }

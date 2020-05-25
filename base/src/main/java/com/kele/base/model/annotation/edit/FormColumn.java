@@ -40,6 +40,8 @@ public @interface FormColumn {
      */
     String rules() default "";
 
+    boolean hide() default false;
+
     //最少输入字符 默认不限制
     int min() default -1;
 

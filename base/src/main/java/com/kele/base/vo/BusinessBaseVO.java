@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.model.annotation.base.BusinessColumn;
+import com.kele.base.model.annotation.edit.FormColumn;
 import com.kele.base.model.annotation.page.TableColumn;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.util.BeanUtil;
@@ -37,6 +38,7 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
 
     @BusinessColumn
     @TableColumn(isCheckbox = true)
+    @FormColumn(hide = true)
     protected String primaryKey;
 
     //页码
@@ -238,36 +240,41 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
     }
 
     @JsonIgnore
+    public D getDO(D dataDo) throws InvocationTargetException, IllegalAccessException {
+        //获取vo的数据集
+        BeanUtil beanUtil = new BeanUtil(this);
+        BeanUtil doBeanUtil = new BeanUtil(dataDo);
+        List<Field> voFields = getVOFields();
+        for (Field field : voFields) {
+            BusinessColumn businessColumn = field.getAnnotation(BusinessColumn.class);
+            if (businessColumn != null) {
+                //通过变量名获取数据
+                String[] fieldName = getFieldName(field);
+                Object value = getValue(beanUtil, fieldName);
+                //如果是主键的话遍历do对象放入对应的id参数
+                if (value != null) {
+                    //TODO 这个在新增的情况下永远不会走
+                    if ("primaryKey".equals(field.getName())) {
+                        String doIdName = getDoIdName(dataDo, value);
+                        if (doIdName != null) {
+                            doBeanUtil.setValue(doIdName, value);
+                        }
+                    }
+                    setValue(doBeanUtil, fieldName, value);
+                }
+            }
+        }
+        return dataDo;
+    }
+
+    @JsonIgnore
     public D getDO() throws IllegalAccessException, InstantiationException, InvocationTargetException {
         ParameterizedType parameterizedType = (ParameterizedType) this.getClass().getGenericSuperclass();
         Class dClass = (Class) parameterizedType.getActualTypeArguments()[0];
         if (dClass != null) {
-            //获取vo的数据集
-            BeanUtil beanUtil = new BeanUtil(this);
             //创建实例对象
             D data = (D) dClass.newInstance();
-            BeanUtil doBeanUtil = new BeanUtil(data);
-            List<Field> voFields = getVOFields();
-            for (Field field : voFields) {
-                BusinessColumn businessColumn = field.getAnnotation(BusinessColumn.class);
-                if (businessColumn != null) {
-                    //通过变量名获取数据
-                    String[] fieldName = getFieldName(field);
-                    Object value = getValue(beanUtil, fieldName);
-                    //如果是主键的话遍历do对象放入对应的id参数
-                    if (value != null) {
-                        //TODO 这个在新增的情况下永远不会走
-                        if ("primaryKey".equals(field.getName())) {
-                            String doIdName = getDoIdName(data, value);
-                            if (doIdName != null) {
-                                doBeanUtil.setValue(doIdName, value);
-                            }
-                        }
-                        setValue(doBeanUtil, fieldName, value);
-                    }
-                }
-            }
-            return data;
+            return getDO(data);
         }
         return null;
     }
@@ -290,4 +297,5 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
         }
         return null;
     }
+
 }

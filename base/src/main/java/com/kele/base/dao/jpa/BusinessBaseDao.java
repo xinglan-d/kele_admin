@@ -26,4 +26,7 @@ public interface BusinessBaseDao<D extends BusinessBaseDO, ID> {
 
     void setDoClass(Class<D> doClass);
 
+    void merge(D doData);
+
+    void remove(D doData);
 }

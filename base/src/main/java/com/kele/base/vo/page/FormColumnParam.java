@@ -1,5 +1,6 @@
 package com.kele.base.vo.page;
 
+import com.kele.base.model.enumerate.base.ColumnType;
 import lombok.Data;
 
 /**
@@ -23,7 +24,13 @@ public class FormColumnParam {
     //日期格式化参数
     private TableDateFormat format;
 
+    //字段类型
+    private String type;
+
     //验证规则
     private RulesVO rules;
+
+    //是否隐藏
+    private boolean hide;
 
 }

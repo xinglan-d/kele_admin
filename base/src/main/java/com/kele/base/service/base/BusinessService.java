@@ -34,9 +34,11 @@ public interface BusinessService<V extends BusinessBaseVO, D extends BusinessBas
     /**
      * 获取编辑页面参数
      */
-    EditAttrVO getEditAttr();
+    EditAttrVO getEditAttr(String primaryKey) throws InvocationTargetException, IllegalAccessException;
 
     void addVO(V vo) throws InstantiationException, IllegalAccessException, InvocationTargetException;
 
-    void editVO(V vo);
+    void editVO(V vo) throws InvocationTargetException, IllegalAccessException;
+
+    void del(String ids);
 }

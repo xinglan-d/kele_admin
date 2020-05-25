@@ -9,15 +9,17 @@ import com.kele.base.model.annotation.page.TableColumn;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.model.util.SpringUtil;
 import com.kele.base.service.base.BusinessService;
+import com.kele.base.util.BeanUtil;
 import com.kele.base.vo.BusinessBaseVO;
 import com.kele.base.vo.page.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @description:
@@ -25,17 +27,32 @@ import java.util.*;
  * @createDate: 2020/1/20 14:52
  * @version: 1.0
  */
-@Service
 @Log4j2
 public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBaseDO> implements BusinessService<V, D> {
 
-
+    //视图层对应的bean
     private Class<V> voClass;
+    //数据库对应的bean
     private Class<D> doClass;
 
-    BusinessBaseDao baseDao;
+    //dao层
+    private BusinessBaseDao baseDao = null;
 
-    List<Field> voFields;
+    //视图层对应的变量 使用地方较多一次缓存
+    private List<Field> voFields;
+
+    public BusinessServiceImpl(Class<V> voClass, Class<D> doClass) {
+        this.doClass = doClass;
+        this.voClass = voClass;
+        try {
+            voFields = voClass.getDeclaredConstructor().newInstance().getVOFields();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
+                | NoSuchMethodException e) {
+            log.error(e.getMessage(), e);
+            voFields = Arrays.asList(voClass.getDeclaredFields());
+        }
+    }
+
 
     @Override
     public PageData<V> getAll(V vo) {
@@ -83,9 +100,11 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     @Override
     public PageAttrVO getPageAttr() {
         List<TableColumnParam> columns = new ArrayList<>();
-        for (Field voField : voFields) {
+        voFields.forEach(voField -> {
+            //获取是否当前字段设置列表注解
             TableColumn tableColumn = voField.getAnnotation(TableColumn.class);
             if (tableColumn != null) {
+                //获取业务注解
                 BusinessColumn businessColumn = voField.getAnnotation(BusinessColumn.class);
                 TableColumnParam tableColumnParam = new TableColumnParam();
                 tableColumnParam.setField(voField.getName());
@@ -95,9 +114,13 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
                 }
                 tableColumnParam.setSearch(tableColumn.search());
                 tableColumnParam.setCheckbox(tableColumn.isCheckbox());
+                tableColumnParam.setType(businessColumn.type().getType());
+                if (StringUtils.isNotBlank(businessColumn.url())) {
+                    tableColumnParam.setUrl(businessColumn.url());
+                }
                 columns.add(tableColumnParam);
             }
-        }
+        });
 
         PageAttrVO pageAttrVO = new PageAttrVO();
         pageAttrVO.setColumns(columns);
@@ -105,7 +128,13 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     }
 
     @Override
-    public EditAttrVO getEditAttr() {
+    public EditAttrVO getEditAttr(String primaryKey) throws InvocationTargetException, IllegalAccessException {
+
+        BeanUtil doBeanUtil = null;
+        if (StringUtils.isNotBlank(primaryKey)) {
+            D doData = (D) getBaseDao().findById(primaryKey);
+            doBeanUtil = new BeanUtil(doData);
+        }
         List<FormColumnParam> columns = new ArrayList<>();
         for (Field voField : voFields) {
             //获取需要form表格渲染的菜单
@@ -117,12 +146,48 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
                 formColumnParam.setField(voField.getName());
                 formColumnParam.setTitle(businessColumn.value());
                 formColumnParam.setRules(getRules(voField, formColumn));
+                formColumnParam.setHide(formColumn.hide());
+                formColumnParam.setType(businessColumn.type().getType());
+                if (doBeanUtil != null) {
+                    String[] columnName;
+                    if (StringUtils.isNotBlank(businessColumn.columnName())) {
+                        columnName = businessColumn.columnName().split("[.]");
+                    } else {
+                        columnName = new String[]{voField.getName()};
+                    }
+                    formColumnParam.setValue(getValue(doBeanUtil, columnName));
+                }
                 columns.add(formColumnParam);
             }
         }
         EditAttrVO editAttrVO = new EditAttrVO();
         editAttrVO.setColumns(columns);
         return editAttrVO;
+    }
+
+    private Object getValue(BeanUtil doBeanUtil, String[] columnName) {
+        return getValue(doBeanUtil, columnName, 0);
+    }
+
+    /**
+     * 获得值
+     *
+     * @param doBeanUtil bean工具类
+     * @param columnName 列名
+     * @param i          循环值
+     * @return {@link Object}
+     */
+    private Object getValue(BeanUtil doBeanUtil, String[] columnName, int i) {
+        Object value = null;
+        try {
+            value = doBeanUtil.getValue(columnName[i]);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            log.error(e.getMessage(), e);
+        }
+        if (columnName.length - 1 == i) {
+            return value;
+        }
+        return getValue(new BeanUtil(value), columnName, ++i);
     }
 
     @Override
@@ -132,8 +197,21 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     }
 
     @Override
-    public void editVO(V vo) {
+    public void editVO(V vo) throws InvocationTargetException, IllegalAccessException {
+        //获取当前vo对应的id
+        String primaryKey = vo.getPrimaryKey();
+        D dataDo = (D) getBaseDao().findById(primaryKey);
+        D aDo = (D) vo.getDO(dataDo);
+        getBaseDao().merge(aDo);
+    }
 
+    @Override
+    public void del(String ids) {
+        List<String> idList = Arrays.asList(ids.split(","));
+        for (String id : idList) {
+            D doData = (D) getBaseDao().findById(id);
+            getBaseDao().remove(doData);
+        }
     }
 
     /**

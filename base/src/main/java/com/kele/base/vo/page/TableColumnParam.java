@@ -25,6 +25,12 @@ public class TableColumnParam {
     //显示名字
     private String title;
 
+    //字段类型
+    private String type;
+
+    //根据type的类型有不同的功能
+    private String url;
+
     //日期格式化参数
     private TableDateFormat format;
 

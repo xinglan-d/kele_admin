@@ -5,7 +5,6 @@ import com.kele.base.dao.data.HqlBO;
 import com.kele.base.dao.data.HqlWhereBO;
 import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.base.dao.jpa.PageParameter;
-import com.kele.base.vo.page.SearchVO;
 import lombok.Getter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +48,7 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
         //TODO 目前存在的问题没有解决数据库注入的问题
         HqlBO hqlBO = getFindHql(pageParameter);
         Query query = hqlBO.getQuery(getEntityManager());
-        query.setFirstResult(pageParameter.getPageNumber());
+        query.setFirstResult(pageParameter.getOffset());
         query.setMaxResults(pageParameter.getPageSize());
         return query.getResultList();
     }
@@ -77,17 +76,17 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
      */
     private List<HqlWhereBO> getWhereHql(PageParameter pageParameter) {
         List<HqlWhereBO> list = new ArrayList<>();
-        for (SearchVO search : pageParameter.getSearch()) {
+        pageParameter.getSearch().forEach(search -> {
             Object value = search.getValue();
             if (value == null || value.equals("")) {
-                continue;
+                return;
             }
             HqlWhereBO whereBO = new HqlWhereBO();
             whereBO.setName(search.getName());
             whereBO.setRule(search.getRule());
             whereBO.setValue(value);
             list.add(whereBO);
-        }
+        });
         return list;
     }
 
@@ -111,7 +110,7 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
 
     @Override
     public D findById(ID id) {
-        return null;
+        return entityManager.find(doClass, id);
     }
 
     @Override
@@ -122,6 +121,16 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
     @Override
     public void setDoClass(Class<D> doClass) {
         this.doClass = doClass;
+    }
+
+    @Override
+    public void merge(D doData) {
+        entityManager.merge(doData);
+    }
+
+    @Override
+    public void remove(D doData) {
+        entityManager.remove(doData);
     }
 
 

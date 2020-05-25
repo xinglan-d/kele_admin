@@ -26,6 +26,9 @@ public @interface BusinessColumn {
     //字段类型
     ColumnType type() default ColumnType.INPUT;
 
+    //根据字段类型对应的不同结果
+    String url() default "";
+
     //正则
     String regular() default "";
 

@@ -1,7 +1,7 @@
 package com.kele.system.service.impl;
 
 import com.kele.system.dao.SystemDao;
-import com.kele.system.dao.dto.UserDO;
+import com.kele.system.dao.dto.LoginUserDO;
 import com.kele.system.service.LoginService;
 import com.kele.system.vo.LoginVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +25,13 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public boolean toLogin(LoginVO loginVO) {
         //封装do对象
-        UserDO userDO = new UserDO();
+        LoginUserDO userDO = new LoginUserDO();
         userDO.setAccount(loginVO.getAccount());
         userDO.setPassword(loginVO.getPassword());
         //通过用户名密码查询数据库
-        Optional<UserDO> one = systemDao.findOne(Example.of(userDO));
+        Optional<LoginUserDO> one = systemDao.findOne(Example.of(userDO));
         //判断是否存在数据
-        if(one.isPresent()){
+        if (one.isPresent()) {
             userDO = one.orElse(null);
             //TODO 在这里要将userDO放入redis并生成token 最好的方式是使用jwt
             return true;

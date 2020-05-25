@@ -17,13 +17,16 @@ import javax.persistence.*;
 @Table(name = "sys_user")
 @Setter
 @Getter
-public class UserDO extends BusinessBaseDO {
+public class SysUserDO extends BusinessBaseDO {
 
     @Id
     @GeneratedValue(generator = "system-uuid")
     @GenericGenerator(name = "system-uuid", strategy = "uuid")
     @Column(length = 32)
     private String userId;
+
+    @Column(length = 32)
+    private String deptId;
 
     @Column(length = 24)
     private String account;
