@@ -1,6 +1,7 @@
 package com.kele.system.service;
 
-import com.kele.system.vo.menu.SysServiceMenuVO;
+import com.kele.system.vo.service.ButtonVO;
+import com.kele.system.vo.service.ServiceVO;
 
 import java.util.List;
 
@@ -12,5 +13,7 @@ import java.util.List;
  */
 public interface SysMenuService {
 
-    List<SysServiceMenuVO> getServiceMenus();
+    List<ServiceVO> getServiceMenus();
+
+    List<ButtonVO> getPageButtons(String id);
 }

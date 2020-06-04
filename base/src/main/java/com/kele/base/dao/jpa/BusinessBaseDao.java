@@ -4,6 +4,7 @@ import com.kele.base.dao.data.BusinessBaseDO;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description:基础dao
@@ -29,4 +30,8 @@ public interface BusinessBaseDao<D extends BusinessBaseDO, ID> {
     void merge(D doData);
 
     void remove(D doData);
+
+    List<BusinessBaseDO> executeHql(String value);
+
+    List<Map<String, Object>> executeSql(String value);
 }

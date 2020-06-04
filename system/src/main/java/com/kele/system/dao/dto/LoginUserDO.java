@@ -31,8 +31,4 @@ public class LoginUserDO extends BusinessBaseDO {
     @Column(length = 56)
     private String password;
 
-    @Override
-    public String getPrimaryKey() {
-        return userId;
-    }
 }

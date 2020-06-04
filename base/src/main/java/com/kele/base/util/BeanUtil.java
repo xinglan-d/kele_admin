@@ -102,9 +102,11 @@ public class BeanUtil {
         try {
             return targetClass.getMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException e) {
-
-            log.error(e.getMessage(), "未找到" + methodName + "方法");
-            return null;
+            Method methods = getMethods(targetClass, methodName);
+            if (methods == null) {
+                log.error("未找到" + methodName + "方法", e);
+            }
+            return methods;
         }
     }//获取方法 如果获取不到代表没有这个方法
 

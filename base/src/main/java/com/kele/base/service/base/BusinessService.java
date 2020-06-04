@@ -2,11 +2,10 @@ package com.kele.base.service.base;
 
 import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.vo.BusinessBaseVO;
+import com.kele.base.vo.Selects;
 import com.kele.base.vo.page.EditAttrVO;
 import com.kele.base.vo.page.PageAttrVO;
 import com.kele.base.vo.page.PageData;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @description:基础业务服务层
@@ -22,23 +21,21 @@ public interface BusinessService<V extends BusinessBaseVO, D extends BusinessBas
      */
     PageData<V> getAll(V vo);
 
-    void setVOClass(Class<V> voClass);
-
-    void setDOClass(Class<D> doClass);
-
     /**
      * 获取列表参数
      */
-    PageAttrVO getPageAttr();
+    PageAttrVO getPageAttr(String url);
 
     /**
      * 获取编辑页面参数
      */
-    EditAttrVO getEditAttr(String primaryKey) throws InvocationTargetException, IllegalAccessException;
+    EditAttrVO getEditAttr(String primaryKey) throws Exception;
 
-    void addVO(V vo) throws InstantiationException, IllegalAccessException, InvocationTargetException;
+    void addVO(V vo) throws Exception;
 
-    void editVO(V vo) throws InvocationTargetException, IllegalAccessException;
+    void editVO(V vo) throws Exception;
 
     void del(String ids);
+
+    Selects getSelects(String field);
 }

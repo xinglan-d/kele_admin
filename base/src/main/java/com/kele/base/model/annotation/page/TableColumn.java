@@ -16,4 +16,8 @@ public @interface TableColumn {
 
     //是否可以搜索
     boolean search() default false;
+
+    String filterField() default "";
+
+    boolean hide() default false;
 }

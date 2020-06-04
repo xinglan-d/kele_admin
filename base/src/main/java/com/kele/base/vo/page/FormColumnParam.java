@@ -1,6 +1,5 @@
 package com.kele.base.vo.page;
 
-import com.kele.base.model.enumerate.base.ColumnType;
 import lombok.Data;
 
 /**
@@ -32,5 +31,14 @@ public class FormColumnParam {
 
     //是否隐藏
     private boolean hide;
+
+    //获取数据接口
+    private String url;
+
+    //是否支持多选
+    private boolean multiple;
+
+    //是否保存上层页面传递过来的值
+    private String pidField;
 
 }

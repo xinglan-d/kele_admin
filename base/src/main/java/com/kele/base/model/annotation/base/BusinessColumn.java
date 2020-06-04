@@ -29,12 +29,6 @@ public @interface BusinessColumn {
     //根据字段类型对应的不同结果
     String url() default "";
 
-    //正则
-    String regular() default "";
-
-    //是否是下拉选
-    String selectCode() default "";
-
     //是否多选  默认单选
     boolean multiple() default false;
 

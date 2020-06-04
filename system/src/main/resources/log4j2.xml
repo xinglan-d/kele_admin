@@ -5,7 +5,7 @@
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
         <!-- 配置日志文件输出目录 ${sys:user.home} -->
-        <Property name="LOG_HOME">logs</Property>
+        <Property name="LOG_HOME">/logs</Property>
         <property name="ERROR_LOG_FILE_NAME">${LOG_HOME}</property>
         <property name="WARN_LOG_FILE_NAME">${LOG_HOME}</property>
         <property name="PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t-%L] %-5level %logger{36} - %msg%n</property>

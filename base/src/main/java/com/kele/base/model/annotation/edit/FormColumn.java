@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FormColumn {
 
+
     /**
      * 输入类型 可以去 https://github.com/yiminghe/async-validator 这个网址查看相关类型
      * string: Must be of type string. This is the default type.
@@ -47,4 +48,6 @@ public @interface FormColumn {
 
     //最大输入字符 默认不限制
     int max() default -1;
+
+    String pidField() default "";
 }

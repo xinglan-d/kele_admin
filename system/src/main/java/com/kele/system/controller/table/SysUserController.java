@@ -1,8 +1,8 @@
 package com.kele.system.controller.table;
 
 import com.kele.base.controller.BusinessController;
-import com.kele.system.dao.dto.SysUserDO;
-import com.kele.system.vo.SysUserVO;
+import com.kele.system.dao.dto.UserDO;
+import com.kele.system.vo.UserVO;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/sysUser")
-public class SysUserController extends BusinessController<SysUserVO, SysUserDO> {
+public class SysUserController extends BusinessController<UserVO, UserDO> {
 
 
 }

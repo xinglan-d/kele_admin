@@ -14,6 +14,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description:业务查询数据实现层
@@ -45,7 +46,6 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
     //拼接实际的查询参数
     @Override
     public List<D> findAll(PageParameter pageParameter) {
-        //TODO 目前存在的问题没有解决数据库注入的问题
         HqlBO hqlBO = getFindHql(pageParameter);
         Query query = hqlBO.getQuery(getEntityManager());
         query.setFirstResult(pageParameter.getOffset());
@@ -131,6 +131,17 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
     @Override
     public void remove(D doData) {
         entityManager.remove(doData);
+    }
+
+    @Override
+    public List<BusinessBaseDO> executeHql(String value) {
+        Query query = entityManager.createQuery(value);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Map<String, Object>> executeSql(String value) {
+        return null;
     }
 
 

@@ -9,6 +9,7 @@ import com.kele.base.model.annotation.edit.FormColumn;
 import com.kele.base.model.annotation.page.TableColumn;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.util.BeanUtil;
+import com.kele.base.util.BusinessUtil;
 import com.kele.base.vo.page.SearchVO;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,18 +52,18 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
     private List<SearchVO> search = new ArrayList<>();
 
     public void setDo(D doData) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
-        setDo(doData, (Class[]) null);
+        setDo(doData, (Class<?>) null);
     }
 
-    public void setDo(D doData, Class annotationClass) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+    public void setDo(D doData, Class<?> annotationClass) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
         setDo(doData, new Class[]{annotationClass});
     }
 
-    public void setDo(D doData, Class[] annotations) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+    public void setDo(D doData, Class<?>[] annotations) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
         //获取vo的数据集
         BeanUtil beanUtil = new BeanUtil(this);
         //获取所有变量
-        List<Field> fields = getVOFields();
+        List<Field> fields = BusinessUtil.getFields(this.getClass());
         //获取do的数据集
         BeanUtil doBeanUtil = new BeanUtil(doData);
         //遍历vo变量
@@ -89,7 +90,7 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
             if (value != null) {
                 //TODO 需要在这里添加判断是否获取的是array数据
                 if (field.getType().isAssignableFrom(List.class)) {
-                    List list = (List) value;
+                    List<?> list = (List<?>) value;
                     Class<?>[] classes = getParameterizedType(field);
                     for (Class<?> aClass : classes) {
                         BusinessUtils businessUtils = new BusinessUtils(aClass);
@@ -102,30 +103,6 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
 
             }
         }
-    }
-
-    /**
-     * 获取当前vo和父vo的变量
-     *
-     * @param
-     * @return java.util.List<java.lang.reflect.Field>
-     * @author duzongyue
-     * @date 2020-04-05 10:52:22
-     */
-    @JsonIgnore
-    public List<Field> getVOFields() {
-        return getVOFields(this.getClass());
-    }
-
-    @JsonIgnore
-    public List<Field> getVOFields(Class clazz) {
-        List<Field> list = new ArrayList<>();
-        if (clazz == null) {
-            return list;
-        }
-        list.addAll(getVOFields(clazz.getSuperclass()));
-        list.addAll(new ArrayList<>(Arrays.asList(clazz.getDeclaredFields())));
-        return list;
     }
 
     /**
@@ -152,7 +129,7 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
     /**
      * 获取字段的名字用于获取对应的值
      *
-     * @param field
+     * @param field 获取页面名的字段
      * @return java.lang.String[]
      * @author duzongyue
      * @date 2020-03-28 02:02:32
@@ -170,10 +147,11 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
 
 
     /**
+     * 得到参数化类型
      * 获取某一个字段上面的泛型参数数组,典型的就是获取List对象里面是啥参数
      *
-     * @param f
-     * @return
+     * @param f f
+     * @return {@link Class<?>[]}
      */
     public static Class<?>[] getParameterizedType(Field f) {
         // 获取f字段的通用类型
@@ -240,48 +218,56 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
     }
 
     @JsonIgnore
-    public D getDO(D dataDo) throws InvocationTargetException, IllegalAccessException {
+    public D getDO(D doData) throws Exception {
         //获取vo的数据集
-        BeanUtil beanUtil = new BeanUtil(this);
-        BeanUtil doBeanUtil = new BeanUtil(dataDo);
-        List<Field> voFields = getVOFields();
+        BeanUtil voBeanUtil = new BeanUtil(this);
+        List<Field> voFields = BusinessUtil.getFields(this.getClass());
         for (Field field : voFields) {
             BusinessColumn businessColumn = field.getAnnotation(BusinessColumn.class);
             if (businessColumn != null) {
                 //通过变量名获取数据
                 String[] fieldName = getFieldName(field);
-                Object value = getValue(beanUtil, fieldName);
+                Object value = voBeanUtil.getValue(field.getName());
                 //如果是主键的话遍历do对象放入对应的id参数
                 if (value != null) {
-                    //TODO 这个在新增的情况下永远不会走
                     if ("primaryKey".equals(field.getName())) {
-                        String doIdName = getDoIdName(dataDo, value);
-                        if (doIdName != null) {
-                            doBeanUtil.setValue(doIdName, value);
-                        }
+                        doData.setPrimaryKey(value);
+                        continue;
                     }
-                    setValue(doBeanUtil, fieldName, value);
+                    doData.setFieldValue(Arrays.asList(fieldName), value);
                 }
             }
         }
-        return dataDo;
+        return doData;
     }
 
     @JsonIgnore
-    public D getDO() throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        ParameterizedType parameterizedType = (ParameterizedType) this.getClass().getGenericSuperclass();
-        Class dClass = (Class) parameterizedType.getActualTypeArguments()[0];
+    public D getDO() throws Exception {
+        Class dClass = BusinessUtil.getTClassName(this.getClass(), 0);
         if (dClass != null) {
             //创建实例对象
-            D data = (D) dClass.newInstance();
+            D data = (D) dClass.getDeclaredConstructor().newInstance();
             return getDO(data);
         }
         return null;
     }
 
     //保存数据
-    private void setValue(BeanUtil doBeanUtil, String[] fieldName, Object value) throws InvocationTargetException, IllegalAccessException {
-        doBeanUtil.setValue(fieldName[0], value);
+    private void setValue(D doData, String[] fieldNames, Object value) throws Exception {
+        if (List.class.isAssignableFrom(value.getClass())) {
+            setListValue(doData, fieldNames, (List) value);
+        }
+        for (String fieldName : fieldNames) {
+            doData.setFieldValue(fieldName, value);
+        }
+    }
+
+    private void setListValue(D doData, String[] fieldNames, List value) throws Exception {
+        if (fieldNames.length == 1) {
+            doData.setFieldValue(fieldNames[0], value);
+        } else {
+
+        }
     }
 
 
@@ -297,5 +283,6 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
         }
         return null;
     }
+
 
 }

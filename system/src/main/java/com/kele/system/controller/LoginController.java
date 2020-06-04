@@ -4,7 +4,6 @@ import com.kele.base.controller.Result;
 import com.kele.base.service.ResultService;
 import com.kele.system.service.LoginService;
 import com.kele.system.vo.LoginVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,13 +19,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
 
 
-    @Autowired
-    private LoginService loginService;
+    private final LoginService loginService;
+
+    public LoginController(LoginService loginService) {
+        this.loginService = loginService;
+    }
 
     @RequestMapping(value = "/toLogin", method = RequestMethod.POST)
     private Result<?> toLogin(@RequestBody(required = false) LoginVO loginVO) {
-        if (loginService.toLogin(loginVO)) {
-            return ResultService.success("123");
+        String s = loginService.toLogin(loginVO);
+        if (s != null) {
+            return ResultService.success(s);
         } else {
             return ResultService.error("用户名密码错误");
         }

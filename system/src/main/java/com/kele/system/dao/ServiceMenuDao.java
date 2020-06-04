@@ -1,7 +1,7 @@
 package com.kele.system.dao;
 
-import com.kele.system.dao.dto.SysServiceDO;
+import com.kele.system.dao.dto.ServiceDO;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ServiceMenuDao extends JpaRepository<SysServiceDO,String> {
+public interface ServiceMenuDao extends JpaRepository<ServiceDO,String> {
 }

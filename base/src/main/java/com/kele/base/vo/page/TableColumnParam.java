@@ -39,4 +39,12 @@ public class TableColumnParam {
 
     //是否可以被搜索
     private boolean isSearch;
+
+    //是否可以多选
+    private boolean multiple;
+
+    //过滤字段值
+    private String filterField;
+
+    private boolean hide;
 }

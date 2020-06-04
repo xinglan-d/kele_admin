@@ -4,5 +4,5 @@ import com.kele.system.vo.LoginVO;
 
 public interface LoginService {
 
-    boolean toLogin(LoginVO loginVO);
+    String toLogin(LoginVO loginVO);
 }

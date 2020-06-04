@@ -4,13 +4,19 @@ import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.model.annotation.base.BusinessColumn;
+import com.kele.base.model.annotation.base.BusinessQuery;
 import com.kele.base.model.annotation.edit.FormColumn;
 import com.kele.base.model.annotation.page.TableColumn;
+import com.kele.base.model.enumerate.base.ColumnType;
+import com.kele.base.model.enumerate.base.QueryType;
 import com.kele.base.model.util.BusinessUtils;
+import com.kele.base.model.util.EnumUtil;
 import com.kele.base.model.util.SpringUtil;
 import com.kele.base.service.base.BusinessService;
 import com.kele.base.util.BeanUtil;
+import com.kele.base.util.BusinessUtil;
 import com.kele.base.vo.BusinessBaseVO;
+import com.kele.base.vo.Selects;
 import com.kele.base.vo.page.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description:
@@ -28,7 +35,7 @@ import java.util.List;
  * @version: 1.0
  */
 @Log4j2
-public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBaseDO> implements BusinessService<V, D> {
+public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends BusinessBaseDO> implements BusinessService<V, D> {
 
     //视图层对应的bean
     private Class<V> voClass;
@@ -36,7 +43,7 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     private Class<D> doClass;
 
     //dao层
-    private BusinessBaseDao baseDao = null;
+    private BusinessBaseDao<D, String> baseDao = null;
 
     //视图层对应的变量 使用地方较多一次缓存
     private List<Field> voFields;
@@ -44,13 +51,7 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     public BusinessServiceImpl(Class<V> voClass, Class<D> doClass) {
         this.doClass = doClass;
         this.voClass = voClass;
-        try {
-            voFields = voClass.getDeclaredConstructor().newInstance().getVOFields();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
-                | NoSuchMethodException e) {
-            log.error(e.getMessage(), e);
-            voFields = Arrays.asList(voClass.getDeclaredFields());
-        }
+        voFields = BusinessUtil.getFields(voClass);
     }
 
 
@@ -80,25 +81,7 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     }
 
     @Override
-    public void setVOClass(Class<V> voClass) {
-        this.voClass = voClass;
-        try {
-            voFields = voClass.getDeclaredConstructor().newInstance().getVOFields();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
-                | NoSuchMethodException e) {
-            log.error(e.getMessage(), e);
-            voFields = Arrays.asList(voClass.getDeclaredFields());
-        }
-
-    }
-
-    @Override
-    public void setDOClass(Class<D> doClass) {
-        this.doClass = doClass;
-    }
-
-    @Override
-    public PageAttrVO getPageAttr() {
+    public PageAttrVO getPageAttr(String url) {
         List<TableColumnParam> columns = new ArrayList<>();
         voFields.forEach(voField -> {
             //获取是否当前字段设置列表注解
@@ -115,8 +98,16 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
                 tableColumnParam.setSearch(tableColumn.search());
                 tableColumnParam.setCheckbox(tableColumn.isCheckbox());
                 tableColumnParam.setType(businessColumn.type().getType());
+                tableColumnParam.setHide(tableColumn.hide());
+                tableColumnParam.setMultiple(businessColumn.multiple());//是否支持多选
                 if (StringUtils.isNotBlank(businessColumn.url())) {
                     tableColumnParam.setUrl(businessColumn.url());
+                } else if (businessColumn.type() == ColumnType.SELECT) {
+                    //TODO 临时新一个回头要取消
+                    tableColumnParam.setUrl("{service}" + url + "/select/" + voField.getName());
+                }
+                if (StringUtils.isNotBlank(tableColumn.filterField())) {
+                    tableColumnParam.setFilterField(tableColumn.filterField());
                 }
                 columns.add(tableColumnParam);
             }
@@ -128,12 +119,10 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     }
 
     @Override
-    public EditAttrVO getEditAttr(String primaryKey) throws InvocationTargetException, IllegalAccessException {
-
-        BeanUtil doBeanUtil = null;
+    public EditAttrVO getEditAttr(String primaryKey) throws Exception {
+        D doData = null;
         if (StringUtils.isNotBlank(primaryKey)) {
-            D doData = (D) getBaseDao().findById(primaryKey);
-            doBeanUtil = new BeanUtil(doData);
+            doData = (D) getBaseDao().findById(primaryKey);
         }
         List<FormColumnParam> columns = new ArrayList<>();
         for (Field voField : voFields) {
@@ -143,19 +132,26 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
             BusinessColumn businessColumn = voField.getAnnotation(BusinessColumn.class);
             if (formColumn != null && businessColumn != null) {
                 FormColumnParam formColumnParam = new FormColumnParam();
-                formColumnParam.setField(voField.getName());
-                formColumnParam.setTitle(businessColumn.value());
-                formColumnParam.setRules(getRules(voField, formColumn));
-                formColumnParam.setHide(formColumn.hide());
-                formColumnParam.setType(businessColumn.type().getType());
-                if (doBeanUtil != null) {
+                formColumnParam.setField(voField.getName());//字段名
+                formColumnParam.setTitle(businessColumn.value());//列名
+                formColumnParam.setRules(getRules(voField, formColumn));//校验规则
+                formColumnParam.setHide(formColumn.hide());//是否隐藏
+                formColumnParam.setType(businessColumn.type().getType());//输入类型
+                formColumnParam.setMultiple(businessColumn.multiple());//是否支持多选
+                if (StringUtils.isNotBlank(businessColumn.url())) {
+                    formColumnParam.setUrl(businessColumn.url());//获取数据接口
+                }
+                if (StringUtils.isNotBlank(formColumn.pidField())) {
+                    formColumnParam.setPidField(formColumn.pidField());//获取数据接口
+                }
+                if (doData != null) {
                     String[] columnName;
                     if (StringUtils.isNotBlank(businessColumn.columnName())) {
                         columnName = businessColumn.columnName().split("[.]");
                     } else {
                         columnName = new String[]{voField.getName()};
                     }
-                    formColumnParam.setValue(getValue(doBeanUtil, columnName));
+                    formColumnParam.setValue(doData.getFieldValue(Arrays.asList(columnName)));
                 }
                 columns.add(formColumnParam);
             }
@@ -191,17 +187,17 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     }
 
     @Override
-    public void addVO(V vo) throws InstantiationException, IllegalAccessException, InvocationTargetException {
-        D aDo = (D) vo.getDO();
+    public void addVO(V vo) throws Exception {
+        D aDo = vo.getDO();
         getBaseDao().save(aDo);
     }
 
     @Override
-    public void editVO(V vo) throws InvocationTargetException, IllegalAccessException {
+    public void editVO(V vo) throws Exception {
         //获取当前vo对应的id
         String primaryKey = vo.getPrimaryKey();
         D dataDo = (D) getBaseDao().findById(primaryKey);
-        D aDo = (D) vo.getDO(dataDo);
+        D aDo = vo.getDO(dataDo);
         getBaseDao().merge(aDo);
     }
 
@@ -213,6 +209,28 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
             getBaseDao().remove(doData);
         }
     }
+
+
+    @Override
+    public Selects getSelects(String field) {
+        for (Field voField : voFields) {
+            if (voField.getName().equals(field)) {
+                BusinessQuery businessQuery = voField.getAnnotation(BusinessQuery.class);
+                if (businessQuery == null) {
+                    return null;
+                } else if (businessQuery.type() == QueryType.HQL) {
+                    List<BusinessBaseDO> selects = getBaseDao().executeHql(businessQuery.value());
+                    return new Selects(selects, businessQuery.idField(), businessQuery.nameField());
+                } else if (businessQuery.type() == QueryType.SQL) {
+                    List<Map<String, Object>> map = getBaseDao().executeSql(businessQuery.value());
+                } else if (businessQuery.type() == QueryType.EMNU) {
+                    return EnumUtil.enumTransferSelects(businessQuery.menu());
+                }
+            }
+        }
+        return null;
+    }
+
 
     /**
      * 获取校验规则
@@ -249,9 +267,9 @@ public class BusinessServiceImpl<V extends BusinessBaseVO, D extends BusinessBas
     public BusinessBaseDao getBaseDao() {
         if (baseDao == null) {
             baseDao = SpringUtil.getBean(BusinessBaseDao.class);
-            baseDao.setIdClass(String.class);
-            baseDao.setDoClass(doClass);
         }
+        baseDao.setIdClass(String.class);
+        baseDao.setDoClass(doClass);
         return baseDao;
     }
 }

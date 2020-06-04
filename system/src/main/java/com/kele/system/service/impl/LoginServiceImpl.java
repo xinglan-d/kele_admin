@@ -1,14 +1,18 @@
 package com.kele.system.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kele.base.util.JwtUtil;
+import com.kele.base.util.RedisCacheUtil;
 import com.kele.system.dao.SystemDao;
-import com.kele.system.dao.dto.LoginUserDO;
+import com.kele.system.dao.dto.UserDO;
 import com.kele.system.service.LoginService;
 import com.kele.system.vo.LoginVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @description:
@@ -19,23 +23,35 @@ import java.util.Optional;
 @Service
 public class LoginServiceImpl implements LoginService {
 
-    @Autowired
-    SystemDao systemDao;
+    private final SystemDao systemDao;
+    private final RedisCacheUtil redisUtil;
+    private ObjectMapper mapper = new ObjectMapper();
+
+    public LoginServiceImpl(SystemDao systemDao, RedisCacheUtil redisUtil) {
+        this.systemDao = systemDao;
+        this.redisUtil = redisUtil;
+    }
 
     @Override
-    public boolean toLogin(LoginVO loginVO) {
+    public String toLogin(LoginVO loginVO) {
         //封装do对象
-        LoginUserDO userDO = new LoginUserDO();
+        UserDO userDO = new UserDO();
         userDO.setAccount(loginVO.getAccount());
         userDO.setPassword(loginVO.getPassword());
         //通过用户名密码查询数据库
-        Optional<LoginUserDO> one = systemDao.findOne(Example.of(userDO));
+        Optional<UserDO> one = systemDao.findOne(Example.of(userDO));
         //判断是否存在数据
         if (one.isPresent()) {
-            userDO = one.orElse(null);
-            //TODO 在这里要将userDO放入redis并生成token 最好的方式是使用jwt
-            return true;
+            try {
+                userDO = one.get();
+                String userId = userDO.getUserId();
+                String userJson = mapper.writeValueAsString(userDO);
+                redisUtil.setCacheObject(userId, userJson, 30, TimeUnit.MINUTES);
+                return new JwtUtil().createToken(userId);
+            } catch (JsonProcessingException e) {
+                return null;
+            }
         }
-        return false;
+        return null;
     }
 }

@@ -14,9 +14,13 @@ import lombok.Setter;
 @Setter
 public class LoginVO extends BusinessBaseVO {
 
-    //账号
+    /**
+     * 账户
+     */
     private String account;
-    //密码
+    /**
+     *
+     */
     private String password;
 
     private String code;

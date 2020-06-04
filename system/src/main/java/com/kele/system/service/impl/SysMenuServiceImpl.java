@@ -1,17 +1,18 @@
 package com.kele.system.service.impl;
 
-import com.kele.base.model.annotation.base.BusinessColumn;
-import com.kele.base.model.util.BusinessUtils;
+import com.kele.base.model.enumerate.table.MenuEnum;
+import com.kele.system.dao.MenuDao;
 import com.kele.system.dao.ServiceMenuDao;
-import com.kele.system.dao.dto.SysServiceDO;
+import com.kele.system.dao.dto.MenuDO;
 import com.kele.system.service.SysMenuService;
-import com.kele.system.vo.menu.SysServiceMenuVO;
+import com.kele.system.vo.service.ButtonVO;
+import com.kele.system.vo.service.ServiceVO;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @description:系统菜单
@@ -23,20 +24,26 @@ import java.util.List;
 @Log4j2
 public class SysMenuServiceImpl implements SysMenuService {
 
-    @Autowired
-    private ServiceMenuDao serviceMenuDao;
+    private final ServiceMenuDao serviceMenuDao;
+    private final MenuDao menuDao;
+
+    public SysMenuServiceImpl(ServiceMenuDao serviceMenuDao, MenuDao menuDao) {
+        this.serviceMenuDao = serviceMenuDao;
+        this.menuDao = menuDao;
+    }
 
 
     @Override
-    public List<SysServiceMenuVO> getServiceMenus() {
-        List<SysServiceDO> serviceMenus = serviceMenuDao.findAll();
-        BusinessUtils businessUtils = new BusinessUtils(SysServiceMenuVO.class);
-        try {
-            return businessUtils.dosToVos(serviceMenus, BusinessColumn.class);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
-            System.out.println(e.getMessage());
-            log.error(e.getMessage(), e);
-        }
-        return null;
+    public List<ServiceVO> getServiceMenus() {
+        return ServiceVO.createServices(serviceMenuDao.findAll());
+    }
+
+    @Override
+    public List<ButtonVO> getPageButtons(String id) {
+        MenuDO menuDO = new MenuDO();
+        menuDO.setParentId(id);
+        menuDO.setType(String.valueOf(MenuEnum.button.getType()));
+        List<MenuDO> buttons = menuDao.findAll(Example.of(menuDO));
+        return buttons.stream().map(ButtonVO::new).collect(Collectors.toList());
     }
 }
