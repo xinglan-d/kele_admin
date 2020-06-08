@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.List;
 
 /**
  * @description:
@@ -28,5 +29,11 @@ public class DeptDO extends BusinessBaseDO {
     private String deptName;
     @Column(length = 32)
     private String deptPid;
+    @Column
+    private String seq;
+
+    @OneToMany
+    @JoinColumn(name = "deptPid")
+    private List<DeptDO> depts;
 
 }

@@ -1,5 +1,8 @@
 package com.kele.base.model.enumerate.table;
 
+import lombok.Getter;
+
+@Getter
 public enum ButtonEnum implements SelectsEnum {
 
     add(0, "新增"),

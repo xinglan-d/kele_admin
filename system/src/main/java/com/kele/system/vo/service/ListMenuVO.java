@@ -24,6 +24,16 @@ public class ListMenuVO {
     private List<ListMenuVO> menus;
 
 
+    public ListMenuVO(MenuDO menu, List<String> ids) {
+        this.menuId = menu.getMenuId();
+        this.parentId = menu.getParentId();
+        this.name = menu.getName();
+        this.type = menu.getType();
+        this.url = menu.getUrl();
+        this.icon = menu.getIcon();
+        this.color = menu.getColor();
+        this.menus = ServiceVO.addMenus(menu.getMenus(), ids);
+    }
     public ListMenuVO(MenuDO menu) {
         this.menuId = menu.getMenuId();
         this.parentId = menu.getParentId();
@@ -34,6 +44,5 @@ public class ListMenuVO {
         this.color = menu.getColor();
         this.menus = ServiceVO.addMenus(menu.getMenus());
     }
-
 
 }

@@ -1,6 +1,5 @@
 package com.kele.system.vo.service;
 
-import com.kele.base.model.enumerate.table.MenuEnum;
 import com.kele.system.dao.dto.MenuDO;
 import com.kele.system.dao.dto.ServiceDO;
 import lombok.Data;
@@ -46,9 +45,24 @@ public class ServiceVO {
         return list;
     }
 
+
+    public static List<ServiceVO> createServices(List<ServiceDO> serviceDOS, List<String> ids) {
+        List<ServiceVO> list = new ArrayList<>();
+        serviceDOS.forEach(serviceDO -> {
+            ServiceVO serviceVO = new ServiceVO(serviceDO);
+            serviceVO.setMenus(addMenus(serviceDO.getMenus(), ids));
+            list.add(serviceVO);
+        });
+        return list;
+    }
+
     public static List<ListMenuVO> addMenus(List<MenuDO> menus) {
-        return menus.stream().filter(menu -> !menu.getType().equals(MenuEnum.button.getType()))
-                .map(ListMenuVO::new)
+        return menus.stream().map(ListMenuVO::new).collect(Collectors.toList());
+    }
+
+    public static List<ListMenuVO> addMenus(List<MenuDO> menus, List<String> ids) {
+        return menus.stream().filter(menu -> ids.contains(menu.getMenuId()))
+                .map(menu -> new ListMenuVO(menu, ids))
                 .collect(Collectors.toList());
     }
 }

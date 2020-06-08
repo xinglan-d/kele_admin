@@ -15,6 +15,7 @@ import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @description:业务查询数据实现层
@@ -83,6 +84,7 @@ public class BusinessBaseDaoImpl<D extends BusinessBaseDO, ID> implements Busine
             }
             HqlWhereBO whereBO = new HqlWhereBO();
             whereBO.setName(search.getName());
+            whereBO.setParameterName(UUID.randomUUID().toString().replaceAll("-", ""));
             whereBO.setRule(search.getRule());
             whereBO.setValue(value);
             list.add(whereBO);

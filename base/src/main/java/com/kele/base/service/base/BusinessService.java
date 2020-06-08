@@ -1,5 +1,6 @@
 package com.kele.base.service.base;
 
+import com.kele.base.controller.BusinessInterface;
 import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.vo.BusinessBaseVO;
 import com.kele.base.vo.Selects;
@@ -38,4 +39,6 @@ public interface BusinessService<V extends BusinessBaseVO, D extends BusinessBas
     void del(String ids);
 
     Selects getSelects(String field);
+
+    void setBusinessInterface(BusinessInterface businessInterface);
 }

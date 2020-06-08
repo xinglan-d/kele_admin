@@ -21,7 +21,7 @@ import java.util.Map;
 @Component
 public class AccessFilter extends ZuulFilter {
 
-
+    private static final String ADMIN_USER_PREFIX = "admin_";
     private static RedisCacheUtil redisCacheUtil;
 
     private static final JwtUtil jwtUtil = new JwtUtil();
@@ -82,11 +82,12 @@ public class AccessFilter extends ZuulFilter {
     public Object run() {
         RequestContext requestContext = RequestContext.getCurrentContext();
         HttpServletRequest request = requestContext.getRequest();
+        System.out.println("尝试访问:" + request.getServletPath());
         String token = getToken(request);
         //在这里对用户进行鉴权
         if (token != null) {
             String id = jwtUtil.verifyToken(token);
-            String userJson = getRedisCacheUtil().getCacheObject(id);
+            String userJson = getRedisCacheUtil().getCacheObject(ADMIN_USER_PREFIX + id);
             if (userJson != null) {
                 requestContext.setSendZuulResponse(true);
                 //3、将转换后的数据放入请求参数中

@@ -27,10 +27,13 @@ public class RoleDO extends BusinessBaseDO {
     private String roleId;
     @Column
     private String roleName;
+    @Column
+    private String deptSeq;
+
 
     @OneToMany(cascade = {CascadeType.REMOVE, CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "roleId")                       //指定与本类主键所对应的外表的外键
-    private List<SysRoleAuthDO> roleAuths;
+    private List<RoleAuthDO> roleAuths;
 
 
 }

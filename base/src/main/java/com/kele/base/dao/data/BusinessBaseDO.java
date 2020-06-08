@@ -6,6 +6,7 @@ import lombok.extern.log4j.Log4j2;
 
 import javax.persistence.Id;
 import javax.persistence.Transient;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  * @version: 1.0
  */
 @Log4j2
-public abstract class BusinessBaseDO {
+public abstract class BusinessBaseDO implements Serializable {
     @Transient
     private List<Field> fields = BusinessUtil.getFields(this.getClass());
     @Transient

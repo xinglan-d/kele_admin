@@ -4,7 +4,7 @@ import com.kele.base.vo.Selects;
 
 import javax.servlet.http.HttpServletRequest;
 
-public interface DeptService {
+public interface DeptService{
 
-    public Selects deptTrue(HttpServletRequest request);
+     Selects deptTrue(HttpServletRequest request);
 }

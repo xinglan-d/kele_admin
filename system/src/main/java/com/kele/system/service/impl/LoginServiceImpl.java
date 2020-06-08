@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class LoginServiceImpl implements LoginService {
 
+    private static final String ADMIN_USER_PREFIX = "admin_";
+
     private final SystemDao systemDao;
     private final RedisCacheUtil redisUtil;
     private ObjectMapper mapper = new ObjectMapper();
@@ -44,9 +46,11 @@ public class LoginServiceImpl implements LoginService {
         if (one.isPresent()) {
             try {
                 userDO = one.get();
+                userDO.setRole(null);
                 String userId = userDO.getUserId();
                 String userJson = mapper.writeValueAsString(userDO);
-                redisUtil.setCacheObject(userId, userJson, 30, TimeUnit.MINUTES);
+                //将用户的信息放入到redis中
+                redisUtil.setCacheObject(ADMIN_USER_PREFIX + userId, userJson, 30, TimeUnit.MINUTES);
                 return new JwtUtil().createToken(userId);
             } catch (JsonProcessingException e) {
                 return null;
@@ -54,4 +58,6 @@ public class LoginServiceImpl implements LoginService {
         }
         return null;
     }
+
+
 }

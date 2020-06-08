@@ -1,10 +1,13 @@
 package com.kele.base.dao.data;
 
 import com.kele.base.model.enumerate.base.SearchEnum;
+import com.kele.base.util.BusinessUtil;
 import lombok.Data;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Id;
 import javax.persistence.Query;
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -34,8 +37,9 @@ public class HqlBO {
     private Query setParameter(String hql, EntityManager entityManager) {
         Query query = entityManager.createQuery(hql);
         if (wheres != null && wheres.size() != 0) {
-            for (HqlWhereBO where : wheres) {
-                query.setParameter(where.getName(), where.getValue());
+            for (int i = 0; i < wheres.size(); i++) {
+                HqlWhereBO where = wheres.get(i);
+                query.setParameter(i, where.getValue());
             }
         }
         return query;
@@ -43,10 +47,17 @@ public class HqlBO {
 
     private String getTotalHql() {
         StringBuffer sb = new StringBuffer();
-        sb.append(" select count(*) from ");
+        sb.append(" select count(");
+        sb.append(getDoIdFiled(doClass));
+        sb.append(") from ");
         sb.append(doClass.getSimpleName());
         sb.append(getWhereStr());
         return sb.toString();
+    }
+
+    private String getDoIdFiled(Class doClass) {
+        List<Field> fields = BusinessUtil.getFields(doClass);
+        return fields.stream().filter(field -> field.getAnnotation(Id.class) != null).findAny().get().getName();
     }
 
     private String getStrHql() {
@@ -62,22 +73,31 @@ public class HqlBO {
         StringBuffer sb = new StringBuffer();
         if (wheres != null && wheres.size() != 0) {
             sb.append(" where ");
-            for (HqlWhereBO where : wheres) {
+            for (int i = 0; i < wheres.size(); i++) {
+                HqlWhereBO where = wheres.get(i);
                 sb.append(where.getName());
                 if (SearchEnum.eq.getValue() == where.getRule()) {
-                    sb.append(" = ");
+                    sb.append(" =");
                 } else if (SearchEnum.ne.getValue() == where.getRule()) {
-                    sb.append(" != ");
+                    sb.append(" !=");
                 } else if (SearchEnum.contain.getValue() == where.getRule()) {
-                    sb.append(" like ");
+                    sb.append(" like");
                     where.setValue("%" + where.getValue() + "%");
                 } else if (SearchEnum.lt.getValue() == where.getRule()) {
-                    sb.append(" < ");
+                    sb.append(" <");
                 } else if (SearchEnum.gt.getValue() == where.getRule()) {
-                    sb.append(" > ");
+                    sb.append(" >");
+                } else if (SearchEnum.preContain.getValue() == where.getRule()) {
+                    sb.append(" like ");
+                    where.setValue("%" + where.getValue());
+                } else if (SearchEnum.afterContain.getValue() == where.getRule()) {
+                    sb.append(" like ");
+                    where.setValue(where.getValue() + "%");
                 }
-                sb.append(" :");
-                sb.append(where.getName());
+                sb.append("?");
+                sb.append(i);
+                sb.append(" ");
+//                sb.append(where.getParameterName());
             }
         }
 

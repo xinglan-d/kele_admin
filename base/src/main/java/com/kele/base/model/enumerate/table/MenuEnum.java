@@ -11,12 +11,12 @@ public enum MenuEnum implements SelectsEnum {
     ;
 
 
-    MenuEnum(int type, String name) {
+    MenuEnum(Integer type, String name) {
         this.type = type;
         this.name = name;
     }
 
-    private int type;
+    private Integer type;
     private String name;
 
     @Override

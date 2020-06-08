@@ -43,8 +43,6 @@ public class PageParameter {
         setPageNumber(pageNumber);
         setPageSize(pageSize);
         setSearch(null);
-        this.pageNumber = pageNumber;
-        this.pageSize = pageSize;
     }
 
     public void setPageNumber(Integer pageNumber) {

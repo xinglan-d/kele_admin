@@ -1,6 +1,7 @@
 package com.kele.base.controller;
 
 import com.kele.base.dao.data.BusinessBaseDO;
+import com.kele.base.model.annotation.base.*;
 import com.kele.base.service.ResultService;
 import com.kele.base.service.base.impl.BusinessServiceImpl;
 import com.kele.base.util.BusinessUtil;
@@ -11,15 +12,13 @@ import com.kele.base.vo.page.PageAttrVO;
 import com.kele.base.vo.page.PageData;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * @description:业务基础层
+ * @description:业务基础层 20200607全部修改为aop代理具体实现参数请去 {@link com.kele.base.model.aspect.BusinessAspect} 查看
  * @author: dzy
  * @createDate: 2020/1/20 14:30
  * @version: 1.0
@@ -28,30 +27,32 @@ import javax.servlet.http.HttpServletRequest;
 @Log4j2
 public abstract class BusinessController<V extends BusinessBaseVO<D>, D extends BusinessBaseDO> {
 
+
     private final BusinessServiceImpl<V, D> businessService = new BusinessServiceImpl(
             BusinessUtil.getTClassName(getClass(), 0),
-            BusinessUtil.getTClassName(getClass(), 1));
+            BusinessUtil.getTClassName(getClass(), 1)
+    );
 
-    @RequestMapping("/getPageAttr")
+    @GetMapping("/getPageAttr")
+    @PageAttr
     public Result<PageAttrVO> getPageAttr() {
-        PageAttrVO pageAttr = businessService.getPageAttr(getClassUrl());
-        return ResultService.success(pageAttr);
+        return null;
     }
 
-    @RequestMapping(value = "/getAll", method = RequestMethod.POST)
-    public Result<PageData<V>> getAll(HttpServletRequest request, @RequestBody(required = false) V vo) {
-        Object businessUser = request.getParameter("businessUser");
-        PageData<V> pageData = businessService.getAll(vo);
-        return ResultService.success(pageData);
+    @PostMapping()
+    @GetAspect
+    public Result<PageData<V>> getAll(HttpServletRequest request, HttpServletResponse response, @RequestBody V vo) {
+        return null;
     }
 
-    @RequestMapping("/getEditAttr")
-    public Result<EditAttrVO> getPageAttr(String primaryKey) throws Exception {
-        EditAttrVO editAttr = businessService.getEditAttr(primaryKey);
-        return ResultService.success(editAttr);
+    @GetMapping("/getEditAttr")
+    @EditAttr
+    public Result<EditAttrVO> getEditAttr(String primaryKey) {
+        return null;
     }
 
-    @RequestMapping("/edit")
+    @PostMapping("/edit")
+    @EditAspect
     public Result<EditAttrVO> edit(@RequestBody V vo) throws Exception {
         if (StringUtils.isBlank(vo.getPrimaryKey())) {
             businessService.addVO(vo);
@@ -67,28 +68,17 @@ public abstract class BusinessController<V extends BusinessBaseVO<D>, D extends 
 
     }
 
-    ;
-
-    @RequestMapping(value = "/del", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/del")
+    @DelAspect
     public Result<EditAttrVO> del(String ids) {
-        businessService.del(ids);
-        return ResultService.success(null);
-    }
-
-    @RequestMapping(value = "/select/{field}", method = RequestMethod.GET)
-    public Result<Selects> select(@PathVariable String field) {
-        Selects selects = businessService.getSelects(field);
-        return ResultService.success(selects);
-    }
-
-    public String getClassUrl() {
-        RequestMapping annotation = this.getClass().getAnnotation(RequestMapping.class);
-        if (annotation != null) {
-            if (annotation.value() != null && annotation.value().length != 0) {
-                return annotation.value()[0];
-            }
-        }
         return null;
     }
+
+    @GetMapping(value = "/select/{field}")
+    @SelectAspect
+    public Result<Selects> select(@PathVariable String field) {
+        return null;
+    }
+
 
 }

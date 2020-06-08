@@ -1,6 +1,7 @@
 package com.kele.base.vo.page;
 
 import com.kele.base.model.enumerate.base.SearchEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
@@ -10,6 +11,7 @@ import lombok.Data;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
 public class SearchVO {
 
     //查询的字段名

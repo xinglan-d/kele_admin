@@ -30,7 +30,9 @@ public enum SearchEnum {
     /**
      * 包含
      */
-    contain(4);
+    contain(4),
+    preContain(5),
+    afterContain(6);
 
     SearchEnum(int value) {
         this.value = value;

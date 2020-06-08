@@ -27,5 +27,7 @@ public class DeptVO extends BusinessBaseVO<DeptDO> {
     @TableColumn()
     @FormColumn()
     private String deptPid;
-
+    @BusinessColumn(value = "seq")
+    @TableColumn()
+    private String seq;
 }

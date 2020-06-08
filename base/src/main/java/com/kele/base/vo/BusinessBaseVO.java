@@ -25,6 +25,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @description:业务数据层
@@ -123,6 +124,9 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
             return beanUtil.getValue(fieldName[i]);
         }
         Object value = beanUtil.getValue(fieldName[i]);
+        if(value == null){
+            return null;
+        }
         return getValue(new BeanUtil(value), fieldName, ++i);
     }
 
@@ -210,6 +214,10 @@ public class BusinessBaseVO<D extends BusinessBaseDO> {
                 value = null;
                 log.error(e.getMessage(), e);
             }
+            //获取所有变量
+            List<Field> fields = BusinessUtil.getFields(this.getClass());
+            Field field = fields.stream().filter(field1 -> field1.getName().equals(search.getName())).findAny().orElse(null);
+            search.setName(Arrays.asList(getFieldName(field)).stream().collect(Collectors.joining(".")));
             if (search.getValue() == null && value != null) {
                 search.setValue(value);
             }

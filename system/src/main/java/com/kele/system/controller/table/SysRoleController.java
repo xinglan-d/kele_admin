@@ -8,6 +8,7 @@ import com.kele.base.vo.Selects;
 import com.kele.system.dao.dto.RoleDO;
 import com.kele.system.service.SysMenuService;
 import com.kele.system.vo.RoleVO;
+import com.kele.system.vo.service.ListMenuVO;
 import com.kele.system.vo.service.ServiceVO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,11 +40,19 @@ public class SysRoleController extends BusinessController<RoleVO, RoleDO> {
         Selects selects = new Selects();
         serviceMenus.forEach(service -> {
             selects.getSelects().add(new SelectVO(service.getServiceId(), null, service.getName()));
-            service.getMenus().forEach(menu -> {
-                selects.getSelects().add(new SelectVO(menu.getMenuId(), menu.getParentId(), menu.getName()));
-            });
+            addMenus(selects, service.getMenus());
         });
         return ResultService.success(selects);
+    }
+
+    public void addMenus(Selects selects, List<ListMenuVO> menus) {
+        if (menus == null) {
+            return;
+        }
+        menus.forEach(menu -> {
+            selects.getSelects().add(new SelectVO(menu.getMenuId(), menu.getParentId(), menu.getName()));
+            addMenus(selects, menu.getMenus());
+        });
     }
 
 }

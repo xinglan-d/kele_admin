@@ -1,17 +1,22 @@
 package com.kele.base.service.base.impl;
 
+import com.kele.base.controller.BusinessInterface;
 import com.kele.base.dao.data.BusinessBaseDO;
 import com.kele.base.dao.jpa.BusinessBaseDao;
 import com.kele.base.dao.jpa.PageParameter;
 import com.kele.base.model.annotation.base.BusinessColumn;
 import com.kele.base.model.annotation.base.BusinessQuery;
+import com.kele.base.model.annotation.base.DataFilter;
 import com.kele.base.model.annotation.edit.FormColumn;
 import com.kele.base.model.annotation.page.TableColumn;
 import com.kele.base.model.enumerate.base.ColumnType;
 import com.kele.base.model.enumerate.base.QueryType;
+import com.kele.base.model.enumerate.base.SearchEnum;
+import com.kele.base.model.sys.UserInfo;
 import com.kele.base.model.util.BusinessUtils;
 import com.kele.base.model.util.EnumUtil;
 import com.kele.base.model.util.SpringUtil;
+import com.kele.base.model.util.UserUtil;
 import com.kele.base.service.base.BusinessService;
 import com.kele.base.util.BeanUtil;
 import com.kele.base.util.BusinessUtil;
@@ -41,7 +46,8 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
     private Class<V> voClass;
     //数据库对应的bean
     private Class<D> doClass;
-
+    //控制层回调方法
+    private BusinessInterface<D> businessInterface;
     //dao层
     private BusinessBaseDao<D, String> baseDao = null;
 
@@ -64,6 +70,9 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
         } else {
             pageParameter = new PageParameter(1, 10);
         }
+        //初始化过滤参数 因为过滤参数本质上就是增加查询条件所以直接使用search 实现
+        initFilter(pageParameter, vo.getClass());
+
         //封装查询参数
         Integer total = getBaseDao().getTotal(pageParameter);//获取总数量
         List data = getBaseDao().findAll(pageParameter);//获取数据
@@ -78,6 +87,40 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
         }
 
         return pageData;
+    }
+
+    /**
+     * 初始化过滤参数 因为过滤参数本质上就是增加查询条件所以直接使用search 实现
+     *
+     * @param pageParameter
+     * @param aClass
+     */
+    private void initFilter(PageParameter pageParameter, Class<? extends BusinessBaseVO> aClass) {
+        UserInfo userInfo = UserUtil.getUserInfo();
+        if (userInfo.isAdmin()) {
+            return;
+        }
+        DataFilter dataFilter = aClass.getAnnotation(DataFilter.class);
+        if (dataFilter != null) {
+            SearchVO searchVO = null;
+            switch (dataFilter.mode()) {
+                case DEPT:
+                    String deptSeq = userInfo.getDeptSeq();
+                    searchVO = new SearchVO(dataFilter.filterFiled(), deptSeq, SearchEnum.afterContain.getValue(), String.class);
+                    break;
+                case USER:
+                    String userId = userInfo.getUserId();
+                    searchVO = new SearchVO(dataFilter.filterFiled(), userId, SearchEnum.afterContain.getValue(), String.class);
+                    break;
+            }
+            List<SearchVO> searchs = pageParameter.getSearch();
+            if (searchs == null) {
+                searchs = new ArrayList<>();
+            }
+            if (searchVO != null) {
+                searchs.add(searchVO);
+            }
+        }
     }
 
     @Override
@@ -189,7 +232,35 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
     @Override
     public void addVO(V vo) throws Exception {
         D aDo = vo.getDO();
+        addFilter(vo, aDo);
+        getBusinessInterface().addBefore(aDo);
         getBaseDao().save(aDo);
+    }
+
+    /**
+     * 添加过滤值
+     *
+     * @param vo
+     * @param aDo
+     * @throws Exception 异常
+     */
+    private void addFilter(V vo, D aDo) throws Exception {
+        DataFilter dataFilter = vo.getClass().getAnnotation(DataFilter.class);
+        if (dataFilter != null) {
+            String[] strings = dataFilter.filterFiled().split("\\.");
+            Object value = null;
+            switch (dataFilter.mode()) {
+                case DEPT:
+                    value = UserUtil.getUserInfo().getDeptSeq();
+                    break;
+                case USER:
+                    value = UserUtil.getUserInfo().getUserId();
+                    break;
+            }
+            if (value != null) {
+                aDo.setFieldValue(Arrays.asList(strings), value);
+            }
+        }
     }
 
     @Override
@@ -198,11 +269,15 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
         String primaryKey = vo.getPrimaryKey();
         D dataDo = (D) getBaseDao().findById(primaryKey);
         D aDo = vo.getDO(dataDo);
+        getBusinessInterface().addBefore(aDo);
         getBaseDao().merge(aDo);
     }
 
     @Override
     public void del(String ids) {
+        if (StringUtils.isBlank(ids)) {
+            return;
+        }
         List<String> idList = Arrays.asList(ids.split(","));
         for (String id : idList) {
             D doData = (D) getBaseDao().findById(id);
@@ -229,6 +304,11 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
             }
         }
         return null;
+    }
+
+    @Override
+    public void setBusinessInterface(BusinessInterface businessInterface) {
+        this.businessInterface = businessInterface;
     }
 
 
@@ -264,12 +344,24 @@ public class BusinessServiceImpl<V extends BusinessBaseVO<D>, D extends Business
         return rulesVO;
     }
 
-    public BusinessBaseDao getBaseDao() {
+    public BusinessBaseDao<D,String>getBaseDao() {
         if (baseDao == null) {
             baseDao = SpringUtil.getBean(BusinessBaseDao.class);
         }
         baseDao.setIdClass(String.class);
         baseDao.setDoClass(doClass);
         return baseDao;
+    }
+
+    public BusinessInterface<D> getBusinessInterface() {
+        if (businessInterface == null) {
+            businessInterface = new BusinessInterface<D>() {
+                @Override
+                public void addBefore(D doData) {
+
+                }
+            };
+        }
+        return businessInterface;
     }
 }

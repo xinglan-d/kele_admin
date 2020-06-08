@@ -16,4 +16,6 @@ public interface SysMenuService {
     List<ServiceVO> getServiceMenus();
 
     List<ButtonVO> getPageButtons(String id);
+
+    List<ServiceVO> getRoleAuthServiceMenus();
 }

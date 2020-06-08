@@ -15,6 +15,8 @@ public class HqlWhereBO {
 
     private String name;
 
+    private String parameterName;
+
     private Object value;
 
     private Integer rule;
